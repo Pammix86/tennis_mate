@@ -11,6 +11,20 @@ import { Label } from "@/components/ui/label";
 
 const userId = 'user-123'; // hardcoded user ID
 
+// Define a type for the user object
+interface User {
+  id: string;
+  username: string;
+  passwordHash: string; // Store password as a hash in a real app
+}
+
+// Create a fake user for demonstration purposes
+const fakeUser: User = {
+  id: 'fake-user-id',
+  username: 'user',
+  passwordHash: 'password', // In real apps, hash the password!
+};
+
 export default function Home() {
   const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
   const [userBookings, setUserBookings] = useState<Booking[]>([]);
@@ -47,7 +61,7 @@ export default function Home() {
 
   const handleLogin = async () => {
     // Basic authentication logic (replace with a real authentication system)
-    if (username === 'user' && password === 'password') {
+    if (username === fakeUser.username && password === fakeUser.passwordHash) {
       setIsAuthenticated(true);
       toast({
         title: "Login Successful",
