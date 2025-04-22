@@ -70,6 +70,7 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [bookedTimeSlots, setBookedTimeSlots] = useState<string[]>([]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -78,12 +79,18 @@ export default function Home() {
         try {
           const slots = await getAvailableTimeSlots();
           setAvailableTimeSlots(slots);
-          
+
           // Retrieve bookings from localStorage
           const storedBookings = localStorage.getItem('bookings');
           if (storedBookings) {
             setUserBookings(JSON.parse(storedBookings));
           }
+
+           // Retrieve booked time slots from local storage
+           const storedBookedTimeSlots = localStorage.getItem('bookedTimeSlots');
+           if (storedBookedTimeSlots) {
+             setBookedTimeSlots(JSON.parse(storedBookedTimeSlots));
+           }
         } catch (error: any) {
           console.error("Failed to fetch data:", error);
           toast({
@@ -124,6 +131,8 @@ export default function Home() {
     setUserBookings([]);
     setAvailableTimeSlots([]);
     localStorage.removeItem('bookings'); // Clear bookings from localStorage
+    localStorage.removeItem('bookedTimeSlots'); // Clear booked time slots from localStorage
+    setBookedTimeSlots([]);
     toast({
       title: "Logout Successful",
       description: "You have been successfully logged out.",
@@ -132,6 +141,13 @@ export default function Home() {
 
   const handleBookTimeSlot = async (timeSlot: TimeSlot) => {
     try {
+      // Update bookedTimeSlots state
+      setBookedTimeSlots(prev => {
+        const newBookedTimeSlots = [...prev, timeSlot.id];
+        localStorage.setItem('bookedTimeSlots', JSON.stringify(newBookedTimeSlots));
+        return newBookedTimeSlots;
+      });
+
       setUserBookings(prev => {
         const newBookings = [...prev, { id: timeSlot.id, timeSlot: timeSlot }];
         // Sort the bookings by timeSlot.startTime
@@ -141,16 +157,7 @@ export default function Home() {
         localStorage.setItem('bookings', JSON.stringify(newBookings));
         return newBookings;
       });
-
-      setAvailableTimeSlots(prev => {
-        return prev.map(slot => {
-          if (slot.id === timeSlot.id) {
-            return { ...slot, isAvailable: false };
-          }
-          return slot;
-        });
-      });
-
+      
       toast({
         title: "Booking Confirmed",
         description: `You have successfully booked the court from ${timeSlot.startTime} to ${timeSlot.endTime}.`,
@@ -180,6 +187,12 @@ export default function Home() {
           }
           return slot;
         });
+      });
+
+      setBookedTimeSlots(prev => {
+        const newBookedTimeSlots = prev.filter(id => id !== bookingId);
+        localStorage.setItem('bookedTimeSlots', JSON.stringify(newBookedTimeSlots));
+        return newBookedTimeSlots;
       });
 
       toast({
@@ -263,18 +276,17 @@ export default function Home() {
           </CardHeader>
           <CardContent className="grid gap-4">
             {availableTimeSlots.length > 0 ? (
-              availableTimeSlots.map((timeSlot, index) => {
-                const isBooked = userBookings.some(booking =>
-                  booking.timeSlot.id === timeSlot.id
-                );
+              availableTimeSlots.map((timeSlot) => {
+                const isBooked = bookedTimeSlots.includes(timeSlot.id);
+                
                 return (
                   <div key={timeSlot.id} className="flex items-center justify-between">
                     <span><i className="fa-regular fa-clock"></i> {timeSlot.startTime} - {timeSlot.endTime}</span>
                     <Button
                       onClick={() => handleBookTimeSlot(timeSlot)}
-                      disabled={!timeSlot.isAvailable || isBooked}
+                      disabled={isBooked || !timeSlot.isAvailable}
                     >
-                      {timeSlot.isAvailable ? (isBooked ? "Booked" : "Book") : "Book"}
+                      {isBooked ? "Booked" : "Book"}
                     </Button>
                   </div>
                 );
