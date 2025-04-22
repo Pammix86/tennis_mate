@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { toast } from "@/hooks/use-toast";
+import { getAvailableTimeSlots } from "@/services/tennis-court";
 
 interface UserProfile {
   firstName: string;
@@ -26,6 +27,7 @@ export default function ProfilePage() {
     lastName: "",
     email: "",
   });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     // Replace with actual data fetching logic in a real application
@@ -40,13 +42,23 @@ export default function ProfilePage() {
       };
       setProfile(dummyProfile);
     }
+
+    const storedAuth = localStorage.getItem('isAuthenticated');
+    if (storedAuth) {
+      setIsAuthenticated(JSON.parse(storedAuth));
+    }
   }, []);
 
   const router = useRouter();
 
-  const handleBackToHome = () => {
+  const handleBackToHome = async () => {
     // Use router.push to navigate to the home page
-    localStorage.setItem('isAuthenticated', 'true');
+    // localStorage.setItem('isAuthenticated', 'true');
+    setIsAuthenticated(true);
+    localStorage.setItem('isAuthenticated', JSON.stringify(true));
+
+    // Refresh available time slots
+    await getAvailableTimeSlots();
     router.push('/');
   };
 
