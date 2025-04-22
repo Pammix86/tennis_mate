@@ -8,6 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import { Toaster } from "@/components/ui/toaster"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Circle } from "lucide-react";
 
 const userId = 'user-123'; // hardcoded user ID
 
@@ -86,6 +87,10 @@ export default function Home() {
         title: "Booking Confirmed",
         description: `You have successfully booked the court from ${timeSlot.startTime} to ${timeSlot.endTime}.`,
       });
+      // After booking, refetch available time slots to reflect changes
+      const updatedSlots = await getAvailableTimeSlots();
+      setAvailableTimeSlots(updatedSlots);
+
     } catch (error: any) {
       console.error("Failed to book time slot:", error);
       toast({
@@ -101,15 +106,21 @@ export default function Home() {
       await cancelBooking(bookingId);
       const bookingToRemove = userBookings.find(booking => booking.id === bookingId);
       setUserBookings(prev => prev.filter(booking => booking.id !== bookingId));
-       // If timeSlot is defined, update availableTimeSlots
-       if (bookingToRemove?.timeSlot) {
-        setAvailableTimeSlots(prev => [...prev, bookingToRemove.timeSlot]);
+      // If timeSlot is defined, update availableTimeSlots
+      if (bookingToRemove?.timeSlot) {
+        setAvailableTimeSlots(prev => {
+          const slotToAdd = { ...bookingToRemove.timeSlot, isAvailable: true };
+          return [...prev, slotToAdd];
+        });
         setBookedTimeSlots(prev => prev.filter(slot => slot !== `${bookingToRemove.timeSlot.startTime}-${bookingToRemove.timeSlot.endTime}`));
       }
       toast({
         title: "Booking Cancelled",
         description: "Your booking has been successfully cancelled.",
       });
+       // After cancelling, refetch available time slots to reflect changes
+       const updatedSlots = await getAvailableTimeSlots();
+       setAvailableTimeSlots(updatedSlots);
     } catch (error: any) {
       console.error("Failed to cancel booking:", error);
       toast({
@@ -126,7 +137,12 @@ export default function Home() {
         <Toaster />
         <Card>
           <CardHeader>
-            <CardTitle>Login</CardTitle>
+          <div className="flex items-center space-x-2">
+            <CardTitle>
+            <Circle className="h-6 w-6 text-green-500" />
+              Tennis Court Booking
+            </CardTitle>
+            </div>
             <CardDescription>Enter your username and password to access the booking system.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
