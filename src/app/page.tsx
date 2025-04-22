@@ -9,7 +9,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTennisBall } from '@fortawesome/free-solid-svg-icons';
+import { faTennisBall as faSolidTennisBall } from '@fortawesome/free-solid-svg-icons';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import { config } from '@fortawesome/fontawesome-svg-core';
 config.autoAddCss = false;
@@ -83,14 +83,12 @@ export default function Home() {
 
   const handleBookTimeSlot = async (timeSlot: TimeSlot) => {
     try {
-      // Find the time slot in availableTimeSlots and disable it
       setAvailableTimeSlots(prev =>
         prev.map(slot =>
           slot.id === timeSlot.id ? { ...slot, isAvailable: false } : slot
         )
       );
   
-      // Add the time slot to user bookings
       const bookingId = Math.random().toString(36).substring(7); // Generate a random ID
       const newBooking: Booking = {
         id: bookingId,
@@ -114,18 +112,15 @@ export default function Home() {
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
-      // Find the booking to be cancelled
       const bookingToRemove = userBookings.find(booking => booking.id === bookingId);
   
       if (bookingToRemove) {
-        // Enable the time slot in availableTimeSlots
         setAvailableTimeSlots(prev =>
           prev.map(slot =>
             slot.id === bookingToRemove.timeSlot.id ? { ...slot, isAvailable: true } : slot
           )
         );
   
-        // Remove the booking from user bookings
         setUserBookings(prev => prev.filter(booking => booking.id !== bookingId));
   
         toast({
@@ -157,7 +152,7 @@ export default function Home() {
           <CardHeader>
           <div className="flex items-center space-x-2">
             <CardTitle>
-            <FontAwesomeIcon icon={faTennisBall} className="h-6 w-6 text-green-500" />
+            <FontAwesomeIcon icon={faSolidTennisBall} className="h-6 w-6 text-green-500" />
               Tennis Court Booking
             </CardTitle>
             </div>
