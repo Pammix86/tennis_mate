@@ -263,12 +263,12 @@ export default function Home() {
           </CardHeader>
           <CardContent className="grid gap-4">
             {availableTimeSlots.length > 0 ? (
-              availableTimeSlots.map((timeSlot) => {
+              availableTimeSlots.map((timeSlot, index) => {
                 const isBooked = userBookings.some(booking =>
                   booking.timeSlot.id === timeSlot.id
                 );
                 return (
-                  <div key={timeSlot.id} className="flex items-center justify-between">
+                  <div key={index} className="flex items-center justify-between">
                     <span><i className="fa-regular fa-clock"></i> {timeSlot.startTime} - {timeSlot.endTime}</span>
                     <Button
                       onClick={() => handleBookTimeSlot(timeSlot)}
