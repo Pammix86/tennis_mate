@@ -79,7 +79,7 @@ export default function Home() {
   const handleBookTimeSlot = async (timeSlot: TimeSlot) => {
     try {
       setUserBookings(prev => {
-        const newBookings = [...prev, { id: Math.random().toString(36).substring(7), timeSlot: timeSlot }];
+        const newBookings = [...prev, { id: timeSlot.id, timeSlot: timeSlot }];
         // Sort the bookings by timeSlot.startTime
         newBookings.sort((a, b) => a.timeSlot.startTime.localeCompare(b.timeSlot.startTime));
         return newBookings;
@@ -116,13 +116,13 @@ export default function Home() {
       if (bookingToRemove) {
         // Update the available time slots by setting the specific time slot to available
         setAvailableTimeSlots(prev => {
-          const newSlots = [...prev];
-          const slotIndex = newSlots.findIndex(slot => slot.id === bookingToRemove.timeSlot.id);
-          if (slotIndex !== -1) {
-            newSlots[slotIndex] = { ...newSlots[slotIndex], isAvailable: true };
-            return newSlots;
-          }
-          return prev; // If the slot is not found, return the previous state
+          const newSlots = prev.map(slot => {
+            if (slot.id === bookingToRemove.timeSlot.id) {
+              return { ...slot, isAvailable: true };
+            }
+            return slot;
+          });
+          return newSlots;
         });
 
         // Remove the booking from the user bookings
@@ -211,7 +211,7 @@ export default function Home() {
                 );
                 return (
                   <div key={timeSlot.id} className="flex items-center justify-between">
-                    <span>{timeSlot.startTime} - {timeSlot.endTime}</span>
+                    <span><i className="fa-regular fa-clock"></i> {timeSlot.startTime} - {timeSlot.endTime}</span>
                     <Button
                       onClick={() => handleBookTimeSlot(timeSlot)}
                       disabled={!timeSlot.isAvailable || isBooked}
@@ -237,9 +237,9 @@ export default function Home() {
           <CardContent className="grid gap-4">
             {userBookings.length > 0 ? (
               userBookings.map((booking, index) => (
-                <div key={booking.id} className="flex items-center justify-between">
-                  <span>{booking.timeSlot.startTime} - {booking.timeSlot.endTime}</span>
-                  <Button variant="destructive" onClick={() => handleCancelBooking(booking.id)}>
+                <div key={booking.timeSlot.id} className="flex items-center justify-between">
+                  <span><i className="fa-regular fa-clock"></i> {booking.timeSlot.startTime} - {booking.timeSlot.endTime}</span>
+                  <Button variant="destructive" onClick={() => handleCancelBooking(booking.timeSlot.id)}>
                     Cancel
                   </Button>
                 </div>
