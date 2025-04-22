@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 
 interface UserProfile {
   firstName: string;
@@ -35,6 +36,12 @@ export default function ProfilePage() {
     };
     setProfile(dummyProfile);
   }, []);
+
+    const router = useRouter();
+
+    const handleBackToHome = () => {
+        router.push('/');
+    };
 
   return (
     <div className="container mx-auto p-4">
@@ -81,9 +88,7 @@ export default function ProfilePage() {
             />
           </div>
           <div className="flex justify-between">
-            <Link href="/">
-              <Button variant="outline">Back to Home</Button>
-            </Link>
+            <Button variant="outline" onClick={handleBackToHome}>Back to Home</Button>
             <Button>Update Profile</Button>
           </div>
         </CardContent>
