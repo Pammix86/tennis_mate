@@ -30,6 +30,8 @@ export default function ProfilePage() {
 
   const [isAuthenticated, setIsAuthenticated] = useState(true);
 
+  const router = useRouter();
+
   useEffect(() => {
     // Replace with actual data fetching logic in a real application
     const storedProfile = localStorage.getItem('userProfile');
@@ -50,9 +52,9 @@ export default function ProfilePage() {
     }
   }, []);
 
-  const handleBackToHome = async () => {
+  const handleBackToHome = () => {
     setIsAuthenticated(true);
-    await getAvailableTimeSlots();
+    router.push("/");
   };
 
   const handleUpdateProfile = () => {

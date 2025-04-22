@@ -27,7 +27,7 @@ const Icons = {
   shield: Shield,
   spinner: Loader2,
   trash: Trash,
-  user: User,
+  user: User
 };
 
 export {Icons};
