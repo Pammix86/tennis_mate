@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { toast } from "@/hooks/use-toast";
-import { getAvailableTimeSlots } from "@/services/tennis-court";
 
 interface UserProfile {
   firstName: string;
@@ -45,16 +44,11 @@ export default function ProfilePage() {
       };
       setProfile(dummyProfile);
     }
-
-    const storedAuth = localStorage.getItem('isAuthenticated');
-    if (storedAuth) {
-      setIsAuthenticated(JSON.parse(storedAuth));
-    }
-  }, []);
+     }, []);
 
   const handleBackToHome = () => {
     setIsAuthenticated(true);
-    router.push("/");
+    router.push(`/`);
   };
 
   const handleUpdateProfile = () => {
@@ -118,4 +112,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
