@@ -46,6 +46,7 @@ export default function ProfilePage() {
     const router = useRouter();
 
     const handleBackToHome = () => {
+        localStorage.setItem('isAuthenticated', 'true');
         router.push('/');
     };
 
@@ -110,3 +111,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+
