@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { getAvailableTimeSlots } from '@/services/tennis-court';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
+import { toast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -81,16 +81,35 @@ export default function Home() {
           setAvailableTimeSlots(slots);
 
           // Retrieve bookings from localStorage
-          const storedBookings = localStorage.getItem('bookings');
-          if (storedBookings) {
-            setUserBookings(JSON.parse(storedBookings));
+          let storedBookingsString = localStorage.getItem('bookings');
+          let storedBookings: Booking[] = [];
+
+          if (storedBookingsString) {
+              try {
+                  storedBookings = JSON.parse(storedBookingsString);
+              } catch (e) {
+                  console.error("Failed to parse bookings from local storage", e);
+                  // Handle the error appropriately, e.g., by clearing the local storage
+                  localStorage.removeItem('bookings');
+              }
           }
+          setUserBookings(storedBookings);
 
            // Retrieve booked time slots from local storage
-           const storedBookedTimeSlots = localStorage.getItem('bookedTimeSlots');
-           if (storedBookedTimeSlots) {
-             setBookedTimeSlots(JSON.parse(storedBookedTimeSlots));
-           }
+           const storedBookedTimeSlotsString = localStorage.getItem('bookedTimeSlots');
+           let storedBookedTimeSlots: string[] = [];
+
+           if (storedBookedTimeSlotsString) {
+              try {
+                  storedBookedTimeSlots = JSON.parse(storedBookedTimeSlotsString);
+              } catch (e) {
+                  console.error("Failed to parse bookedTimeSlots from local storage", e);
+                  // Handle the error appropriately, e.g., by clearing the local storage
+                  localStorage.removeItem('bookedTimeSlots');
+              }
+          }
+
+           setBookedTimeSlots(storedBookedTimeSlots);
         } catch (error: any) {
           console.error("Failed to fetch data:", error);
           toast({
@@ -104,6 +123,10 @@ export default function Home() {
       };
 
       fetchData();
+    } else {
+      setAvailableTimeSlots([]);
+      setUserBookings([]);
+      setBookedTimeSlots([]);
     }
   }, [isAuthenticated]);
 
@@ -158,6 +181,13 @@ export default function Home() {
         return newBookings;
       });
       
+      // Update availableTimeSlots state
+      setAvailableTimeSlots(prev => {
+        return prev.map(slot =>
+          slot.id === timeSlot.id ? { ...slot, isAvailable: false } : slot
+        );
+      });
+
       toast({
         title: "Booking Confirmed",
         description: `You have successfully booked the court from ${timeSlot.startTime} to ${timeSlot.endTime}.`,
@@ -180,6 +210,13 @@ export default function Home() {
         return newBookings;
       });
 
+       // Update bookedTimeSlots state
+       setBookedTimeSlots(prev => {
+        const newBookedTimeSlots = prev.filter(id => id !== bookingId);
+        localStorage.setItem('bookedTimeSlots', JSON.stringify(newBookedTimeSlots));
+        return newBookedTimeSlots;
+      });
+
       setAvailableTimeSlots(prev => {
         return prev.map(slot => {
           if (slot.id === bookingId) {
@@ -187,12 +224,6 @@ export default function Home() {
           }
           return slot;
         });
-      });
-
-      setBookedTimeSlots(prev => {
-        const newBookedTimeSlots = prev.filter(id => id !== bookingId);
-        localStorage.setItem('bookedTimeSlots', JSON.stringify(newBookedTimeSlots));
-        return newBookedTimeSlots;
       });
 
       toast({

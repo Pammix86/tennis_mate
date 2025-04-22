@@ -27,9 +27,11 @@ export default function ProfilePage() {
     email: "",
   });
 
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
-
   const router = useRouter();
+
+  const handleBackToHome = () => {
+    router.push(`/`);
+  };
 
   useEffect(() => {
     // Replace with actual data fetching logic in a real application
@@ -45,11 +47,6 @@ export default function ProfilePage() {
       setProfile(dummyProfile);
     }
      }, []);
-
-  const handleBackToHome = () => {
-    setIsAuthenticated(true);
-    router.push(`/`);
-  };
 
   const handleUpdateProfile = () => {
     localStorage.setItem('userProfile', JSON.stringify(profile));
