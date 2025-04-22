@@ -10,7 +10,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import { toast } from "@/hooks/use-toast";
@@ -43,26 +42,20 @@ export default function ProfilePage() {
     }
   }, []);
 
-    const router = useRouter();
+  const router = useRouter();
 
-    const handleBackToHome = () => {
-        localStorage.setItem('isAuthenticated', 'true');
-        
-        // Parse the value from localStorage and set isAuthenticated state
-        const isAuthenticatedValue = localStorage.getItem('isAuthenticated');
-        const isAuthenticated = isAuthenticatedValue === 'true';
+  const handleBackToHome = () => {
+    // Use router.push to navigate to the home page
+    router.push('/');
+  };
 
-        // Use router.push to navigate to the home page
-        router.push('/');
-    };
-
-    const handleUpdateProfile = () => {
-      localStorage.setItem('userProfile', JSON.stringify(profile));
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been successfully updated.",
-      });
-    };
+  const handleUpdateProfile = () => {
+    localStorage.setItem('userProfile', JSON.stringify(profile));
+    toast({
+      title: "Profile Updated",
+      description: "Your profile has been successfully updated.",
+    });
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -117,4 +110,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
