@@ -27,7 +27,8 @@ export default function ProfilePage() {
     lastName: "",
     email: "",
   });
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
 
   useEffect(() => {
     // Replace with actual data fetching logic in a real application
@@ -49,17 +50,9 @@ export default function ProfilePage() {
     }
   }, []);
 
-  const router = useRouter();
-
   const handleBackToHome = async () => {
-    // Use router.push to navigate to the home page
-    // localStorage.setItem('isAuthenticated', 'true');
     setIsAuthenticated(true);
-    localStorage.setItem('isAuthenticated', JSON.stringify(true));
-
-    // Refresh available time slots
     await getAvailableTimeSlots();
-    router.push('/');
   };
 
   const handleUpdateProfile = () => {
