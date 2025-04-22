@@ -8,11 +8,6 @@ import { toast } from '@/hooks/use-toast';
 import { Toaster } from "@/components/ui/toaster"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTennisBall as faSolidTennisBall } from '@fortawesome/free-solid-svg-icons';
-import '@fortawesome/fontawesome-svg-core/styles.css';
-import { config } from '@fortawesome/fontawesome-svg-core';
-config.autoAddCss = false;
 
 const userId = 'user-123'; // hardcoded user ID
 
@@ -88,14 +83,9 @@ export default function Home() {
           slot.id === timeSlot.id ? { ...slot, isAvailable: false } : slot
         )
       );
-  
-      const bookingId = Math.random().toString(36).substring(7); // Generate a random ID
-      const newBooking: Booking = {
-        id: bookingId,
-        timeSlot: timeSlot,
-      };
-      setUserBookings(prev => [...prev, newBooking]);
-  
+
+      setUserBookings(prev => [...prev, { id: Math.random().toString(36).substring(7), timeSlot: timeSlot }]);
+
       toast({
         title: "Booking Confirmed",
         description: `You have successfully booked the court from ${timeSlot.startTime} to ${timeSlot.endTime}.`,
@@ -113,16 +103,16 @@ export default function Home() {
   const handleCancelBooking = async (bookingId: string) => {
     try {
       const bookingToRemove = userBookings.find(booking => booking.id === bookingId);
-  
+
       if (bookingToRemove) {
         setAvailableTimeSlots(prev =>
           prev.map(slot =>
             slot.id === bookingToRemove.timeSlot.id ? { ...slot, isAvailable: true } : slot
           )
         );
-  
+
         setUserBookings(prev => prev.filter(booking => booking.id !== bookingId));
-  
+
         toast({
           title: "Booking Cancelled",
           description: "Your booking has been successfully cancelled.",
@@ -150,11 +140,27 @@ export default function Home() {
         <Toaster />
         <Card>
           <CardHeader>
-          <div className="flex items-center space-x-2">
-            <CardTitle>
-            <FontAwesomeIcon icon={faSolidTennisBall} className="h-6 w-6 text-green-500" />
-              Tennis Court Booking
-            </CardTitle>
+            <div className="flex items-center space-x-2">
+              <CardTitle>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-6 w-6 text-green-500"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M18 6l-6 6 6 6" />
+                  <path d="M6 6l6 6-6 6" />
+                </svg>
+                Tennis Court Booking
+              </CardTitle>
             </div>
             <CardDescription>Enter your username and password to access the booking system.</CardDescription>
           </CardHeader>
@@ -200,16 +206,16 @@ export default function Home() {
           </CardHeader>
           <CardContent className="grid gap-4">
             {availableTimeSlots.length > 0 ? (
-              availableTimeSlots.map((timeSlot, index) => {
+              availableTimeSlots.map((timeSlot) => {
                 const isBooked = userBookings.some(booking =>
-                  booking.timeSlot.startTime === timeSlot.startTime && booking.timeSlot.endTime === timeSlot.endTime
+                  booking.timeSlot.id === timeSlot.id
                 );
                 return (
-                  <div key={index} className="flex items-center justify-between">
+                  <div key={timeSlot.id} className="flex items-center justify-between">
                     <span>{timeSlot.startTime} - {timeSlot.endTime}</span>
                     <Button
                       onClick={() => handleBookTimeSlot(timeSlot)}
-                      disabled={!timeSlot.isAvailable || isBooked}
+                      disabled={isBooked}
                     >
                       {isBooked ? "Booked" : "Book"}
                     </Button>
@@ -248,5 +254,3 @@ export default function Home() {
     </div>
   );
 }
-
-
