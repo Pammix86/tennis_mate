@@ -80,7 +80,7 @@ export default function Home() {
     try {
       const booking = await bookTimeSlot(timeSlot);
       setUserBookings(prev => [...prev, booking]);
-      setAvailableTimeSlots(prev => prev.filter(slot => slot !== timeSlot));
+      setAvailableTimeSlots(prev => prev.filter(slot => slot.startTime !== timeSlot.startTime || slot.endTime !== timeSlot.endTime));
       toast({
         title: "Booking Confirmed",
         description: `You have successfully booked the court from ${timeSlot.startTime} to ${timeSlot.endTime}.`,
@@ -98,7 +98,11 @@ export default function Home() {
   const handleCancelBooking = async (bookingId: string) => {
     try {
       await cancelBooking(bookingId);
+      const bookingToRemove = userBookings.find(booking => booking.id === bookingId);
       setUserBookings(prev => prev.filter(booking => booking.id !== bookingId));
+      if (bookingToRemove) {
+        setAvailableTimeSlots(prev => [...prev, bookingToRemove.timeSlot]);
+      }
       toast({
         title: "Booking Cancelled",
         description: "Your booking has been successfully cancelled.",
