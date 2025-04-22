@@ -1,7 +1,6 @@
-# Firebase Studio
+# DEMO TENNIS MATE
 
 This is a NextJS starter in Firebase Studio.
 
 To get started, take a look at src/app/page.tsx.
 
-dssds
