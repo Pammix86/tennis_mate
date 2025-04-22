@@ -30,7 +30,7 @@ export default function ProfilePage() {
   const router = useRouter();
 
   const handleBackToHome = () => {
-    router.push(`/`);
+    router.push(`/tennis`);
   };
 
   useEffect(() => {

@@ -1,17 +1,15 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { getAvailableTimeSlots } from '@/services/tennis-court';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Link from 'next/link';
 import { CircleUserRound } from 'lucide-react';
-
-const userId = 'user-123'; // hardcoded user ID
+import { getAvailableTimeSlots } from '@/services/tennis-court';
 
 // Define a type for the user object
 interface User {
@@ -27,113 +25,16 @@ const fakeUser: User = {
   passwordHash: 'password', // In real apps, hash the password!
 };
 
-/**
- * Represents a time slot.
- */
-export interface TimeSlot {
-  /**
-   * The id of the time slot.
-   */
-  id: string;
-  /**
-   * The start time of the time slot.
-   */
-  startTime: string;
-  /**
-   * The end time of the time slot.
-   */
-  endTime: string;
-  /**
-   * Whether the time slot is available.
-   */
-  isAvailable: boolean;
-}
-
-/**
- * Represents a booking.
- */
-export interface Booking {
-  /**
-   * The id of the booking.
-   */
-  id: string;
-  /**
-   * The time slot of the booking.
-   */
-  timeSlot: TimeSlot;
-}
-
-export default function Home() {
-  const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
-  const [userBookings, setUserBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [bookedTimeSlots, setBookedTimeSlots] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      const fetchData = async () => {
-        setLoading(true);
-        try {
-          const slots = await getAvailableTimeSlots();
-          setAvailableTimeSlots(slots);
-
-          // Retrieve bookings from localStorage
-          let storedBookingsString = localStorage.getItem('bookings');
-          let storedBookings: Booking[] = [];
-
-          if (storedBookingsString) {
-              try {
-                  storedBookings = JSON.parse(storedBookingsString);
-              } catch (e) {
-                  console.error("Failed to parse bookings from local storage", e);
-                  // Handle the error appropriately, e.g., by clearing the local storage
-                  localStorage.removeItem('bookings');
-              }
-          }
-          setUserBookings(storedBookings);
-
-           // Retrieve booked time slots from local storage
-           const storedBookedTimeSlotsString = localStorage.getItem('bookedTimeSlots');
-           let storedBookedTimeSlots: string[] = [];
-
-           if (storedBookedTimeSlotsString) {
-              try {
-                  storedBookedTimeSlots = JSON.parse(storedBookedTimeSlotsString);
-              } catch (e) {
-                  console.error("Failed to parse bookedTimeSlots from local storage", e);
-                  // Handle the error appropriately, e.g., by clearing the local storage
-                  localStorage.removeItem('bookedTimeSlots');
-              }
-          }
-
-           setBookedTimeSlots(storedBookedTimeSlots);
-        } catch (error: any) {
-          console.error("Failed to fetch data:", error);
-          toast({
-            title: "Error",
-            description: "Failed to load data. Please try again later.",
-            variant: "destructive",
-          });
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchData();
-    } else {
-      setAvailableTimeSlots([]);
-      setUserBookings([]);
-      setBookedTimeSlots([]);
-    }
-  }, [isAuthenticated]);
+  const router = useRouter();
 
   const handleLogin = async () => {
     // Basic authentication logic (replace with a real authentication system)
     if (username === fakeUser.username && password === fakeUser.passwordHash) {
-      setIsAuthenticated(true);
+      localStorage.setItem('isAuthenticated', 'true');
+      router.push('/tennis');
       toast({
         title: "Login Successful",
         description: "You have successfully logged in.",
@@ -147,210 +48,42 @@ export default function Home() {
     }
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setUsername('');
-    setPassword('');
-    setUserBookings([]);
-    setAvailableTimeSlots([]);
-    localStorage.removeItem('bookings'); // Clear bookings from localStorage
-    localStorage.removeItem('bookedTimeSlots'); // Clear booked time slots from localStorage
-    setBookedTimeSlots([]);
-    toast({
-      title: "Logout Successful",
-      description: "You have been successfully logged out.",
-    });
-  };
-
-  const handleBookTimeSlot = async (timeSlot: TimeSlot) => {
-    try {
-      // Update bookedTimeSlots state
-      setBookedTimeSlots(prev => {
-        const newBookedTimeSlots = [...prev, timeSlot.id];
-        localStorage.setItem('bookedTimeSlots', JSON.stringify(newBookedTimeSlots));
-        return newBookedTimeSlots;
-      });
-
-      setUserBookings(prev => {
-        const newBookings = [...prev, { id: timeSlot.id, timeSlot: timeSlot }];
-        // Sort the bookings by timeSlot.startTime
-        newBookings.sort((a, b) => a.timeSlot.startTime.localeCompare(b.timeSlot.startTime));
-        
-        // Save bookings to localStorage
-        localStorage.setItem('bookings', JSON.stringify(newBookings));
-        return newBookings;
-      });
-      
-      // Update availableTimeSlots state
-      setAvailableTimeSlots(prev => {
-        return prev.map(slot =>
-          slot.id === timeSlot.id ? { ...slot, isAvailable: false } : slot
-        );
-      });
-
-      toast({
-        title: "Booking Confirmed",
-        description: `You have successfully booked the court from ${timeSlot.startTime} to ${timeSlot.endTime}.`,
-      });
-    } catch (error: any) {
-      console.error("Failed to book time slot:", error);
-      toast({
-        title: "Error",
-        description: "Failed to book time slot. Please try again later.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCancelBooking = async (bookingId: string) => {
-    try {
-      setUserBookings(prev => {
-        const newBookings = prev.filter(booking => booking.timeSlot.id !== bookingId);
-        localStorage.setItem('bookings', JSON.stringify(newBookings));
-        return newBookings;
-      });
-
-       // Update bookedTimeSlots state
-       setBookedTimeSlots(prev => {
-        const newBookedTimeSlots = prev.filter(id => id !== bookingId);
-        localStorage.setItem('bookedTimeSlots', JSON.stringify(newBookedTimeSlots));
-        return newBookedTimeSlots;
-      });
-
-      setAvailableTimeSlots(prev => {
-        return prev.map(slot => {
-          if (slot.id === bookingId) {
-            return { ...slot, isAvailable: true };
-          }
-          return slot;
-        });
-      });
-
-      toast({
-        title: "Booking Cancelled",
-        description: "Your booking has been successfully cancelled.",
-      });
-    } catch (error: any) {
-      console.error("Failed to cancel booking:", error);
-      toast({
-        title: "Error",
-        description: "Failed to cancel booking. Please try again later.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="container mx-auto p-4">
-        <Toaster />
-        <Card>
-          <CardHeader>
-            <div className="flex items-center space-x-2">
-              <i className="fa-solid fa-table-tennis-paddle-ball"></i>
-              <CardTitle>
-                Tennis Court Booking
-              </CardTitle>
-            </div>
-            <CardDescription>Enter your username and password to access the booking system.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                placeholder="Enter your username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <Button onClick={handleLogin}>Login</Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
   return (
     <div className="container mx-auto p-4">
       <Toaster />
-      <div className="flex justify-between mb-4">
-        <Link href="/profile">
-          <Button variant="ghost">
-            <CircleUserRound className="mr-2 h-4 w-4" />
-            Profile
-          </Button>
-        </Link>
-        <Button variant="outline" onClick={handleLogout}>
-          Logout
-        </Button>
-      </div>
-      <section className="mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Available Time Slots</CardTitle>
-            <CardDescription>Book your preferred time slot.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            {availableTimeSlots.length > 0 ? (
-              availableTimeSlots.map((timeSlot) => {
-                const isBooked = bookedTimeSlots.includes(timeSlot.id);
-                
-                return (
-                  <div key={timeSlot.id} className="flex items-center justify-between">
-                    <span><i className="fa-regular fa-clock"></i> {timeSlot.startTime} - {timeSlot.endTime}</span>
-                    <Button
-                      onClick={() => handleBookTimeSlot(timeSlot)}
-                      disabled={isBooked || !timeSlot.isAvailable}
-                    >
-                      {isBooked ? "Booked" : "Book"}
-                    </Button>
-                  </div>
-                );
-              })
-            ) : (
-              <div>No available time slots at the moment.</div>
-            )}
-          </CardContent>
-        </Card>
-      </section>
-
-      <section>
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Bookings</CardTitle>
-            <CardDescription>Manage your upcoming and past bookings.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            {userBookings.length > 0 ? (
-              userBookings.map((booking) => (
-                <div key={booking.timeSlot.id} className="flex items-center justify-between">
-                  <span><i className="fa-regular fa-clock"></i> {booking.timeSlot.startTime} - {booking.timeSlot.endTime}</span>
-                  <Button variant="destructive" onClick={() => handleCancelBooking(booking.timeSlot.id)}>
-                    Cancel
-                  </Button>
-                </div>
-              ))
-            ) : (
-              <div>No bookings found.</div>
-            )}
-          </CardContent>
-        </Card>
-      </section>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <i className="fa-solid fa-table-tennis-paddle-ball"></i>
+            <CardTitle>
+              Tennis Mate
+            </CardTitle>
+          </div>
+          <CardDescription>Enter your username and password to access the booking system.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              placeholder="Enter your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <Button onClick={handleLogin}>Login</Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
