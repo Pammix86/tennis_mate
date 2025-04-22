@@ -47,6 +47,12 @@ export default function ProfilePage() {
 
     const handleBackToHome = () => {
         localStorage.setItem('isAuthenticated', 'true');
+        
+        // Parse the value from localStorage and set isAuthenticated state
+        const isAuthenticatedValue = localStorage.getItem('isAuthenticated');
+        const isAuthenticated = isAuthenticatedValue === 'true';
+
+        // Use router.push to navigate to the home page
         router.push('/');
     };
 
