@@ -32,6 +32,7 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [bookedTimeSlots, setBookedTimeSlots] = useState<string[]>([]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -78,9 +79,9 @@ export default function Home() {
 
   const handleBookTimeSlot = async (timeSlot: TimeSlot) => {
     try {
-      const booking = await bookTimeSlot(timeSlot);
-      setUserBookings(prev => [...prev, booking]);
-      setAvailableTimeSlots(prev => prev.filter(slot => slot.startTime !== timeSlot.startTime || slot.endTime !== timeSlot.endTime));
+      await bookTimeSlot(timeSlot);
+      // Update booked time slots state
+      setBookedTimeSlots(prev => [...prev, `${timeSlot.startTime}-${timeSlot.endTime}`]);
       toast({
         title: "Booking Confirmed",
         description: `You have successfully booked the court from ${timeSlot.startTime} to ${timeSlot.endTime}.`,
@@ -100,8 +101,10 @@ export default function Home() {
       await cancelBooking(bookingId);
       const bookingToRemove = userBookings.find(booking => booking.id === bookingId);
       setUserBookings(prev => prev.filter(booking => booking.id !== bookingId));
-      if (bookingToRemove) {
+       // If timeSlot is defined, update availableTimeSlots
+       if (bookingToRemove?.timeSlot) {
         setAvailableTimeSlots(prev => [...prev, bookingToRemove.timeSlot]);
+        setBookedTimeSlots(prev => prev.filter(slot => slot !== `${bookingToRemove.timeSlot.startTime}-${bookingToRemove.timeSlot.endTime}`));
       }
       toast({
         title: "Booking Cancelled",
@@ -168,14 +171,20 @@ export default function Home() {
           </CardHeader>
           <CardContent className="grid gap-4">
             {availableTimeSlots.length > 0 ? (
-              availableTimeSlots.map((timeSlot, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <span>{timeSlot.startTime} - {timeSlot.endTime}</span>
-                  <Button onClick={() => handleBookTimeSlot(timeSlot)} disabled={!timeSlot.isAvailable}>
-                    Book
-                  </Button>
-                </div>
-              ))
+              availableTimeSlots.map((timeSlot, index) => {
+                const isBooked = bookedTimeSlots.includes(`${timeSlot.startTime}-${timeSlot.endTime}`);
+                return (
+                  <div key={index} className="flex items-center justify-between">
+                    <span>{timeSlot.startTime} - {timeSlot.endTime}</span>
+                    <Button
+                      onClick={() => handleBookTimeSlot(timeSlot)}
+                      disabled={isBooked || !timeSlot.isAvailable}
+                    >
+                      {isBooked ? "Booked" : "Book"}
+                    </Button>
+                  </div>
+                );
+              })
             ) : (
               <div>No available time slots at the moment.</div>
             )}
