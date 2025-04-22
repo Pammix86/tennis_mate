@@ -8,6 +8,8 @@ import { toast } from '@/hooks/use-toast';
 import { Toaster } from "@/components/ui/toaster"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { initializeApp } from "firebase/app";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 
 const userId = 'user-123'; // hardcoded user ID
 
@@ -164,8 +166,8 @@ export default function Home() {
           </CardHeader>
           <CardContent className="grid gap-4">
             {availableTimeSlots.length > 0 ? (
-              availableTimeSlots.map((timeSlot, index) => (
-                <div key={index} className="flex items-center justify-between">
+              availableTimeSlots.map((timeSlot) => (
+                <div key={timeSlot.startTime} className="flex items-center justify-between">
                   <span>{timeSlot.startTime} - {timeSlot.endTime}</span>
                   <Button onClick={() => handleBookTimeSlot(timeSlot)} disabled={!timeSlot.isAvailable}>
                     Book
