@@ -1,3 +1,132 @@
+"use client";
+
+import { useEffect, useState } from 'react';
+import { getAvailableTimeSlots, bookTimeSlot, getBookingsForUser, cancelBooking, TimeSlot, Booking } from '@/services/tennis-court';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
+import { Toaster } from "@/components/ui/toaster"
+
+const userId = 'user-123'; // hardcoded user ID
+
 export default function Home() {
-  return <></>;
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
+  const [userBookings, setUserBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const slots = await getAvailableTimeSlots();
+        setAvailableTimeSlots(slots);
+
+        const bookings = await getBookingsForUser(userId);
+        setUserBookings(bookings);
+      } catch (error: any) {
+        console.error("Failed to fetch data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load data. Please try again later.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleBookTimeSlot = async (timeSlot: TimeSlot) => {
+    try {
+      const booking = await bookTimeSlot(timeSlot);
+      setUserBookings(prev => [...prev, booking]);
+      setAvailableTimeSlots(prev => prev.filter(slot => slot !== timeSlot));
+      toast({
+        title: "Booking Confirmed",
+        description: `You have successfully booked the court from ${timeSlot.startTime} to ${timeSlot.endTime}.`,
+      });
+    } catch (error: any) {
+      console.error("Failed to book time slot:", error);
+      toast({
+        title: "Error",
+        description: "Failed to book time slot. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancelBooking = async (bookingId: string) => {
+    try {
+      await cancelBooking(bookingId);
+      setUserBookings(prev => prev.filter(booking => booking.id !== bookingId));
+      toast({
+        title: "Booking Cancelled",
+        description: "Your booking has been successfully cancelled.",
+      });
+    } catch (error: any) {
+      console.error("Failed to cancel booking:", error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel booking. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div className="container mx-auto p-4">
+      <Toaster />
+      <section className="mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Available Time Slots</CardTitle>
+            <CardDescription>Book your preferred time slot.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            {availableTimeSlots.length > 0 ? (
+              availableTimeSlots.map((timeSlot, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <span>{timeSlot.startTime} - {timeSlot.endTime}</span>
+                  <Button onClick={() => handleBookTimeSlot(timeSlot)} disabled={!timeSlot.isAvailable}>
+                    Book
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <div>No available time slots at the moment.</div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Bookings</CardTitle>
+            <CardDescription>Manage your upcoming and past bookings.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            {userBookings.length > 0 ? (
+              userBookings.map((booking) => (
+                <div key={booking.id} className="flex items-center justify-between">
+                  <span>{booking.timeSlot.startTime} - {booking.timeSlot.endTime}</span>
+                  <Button variant="destructive" onClick={() => handleCancelBooking(booking.id)}>
+                    Cancel
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <div>No bookings found.</div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+    </div>
+  );
 }
