@@ -107,14 +107,17 @@ export async function getBookingsForUser(userId: string): Promise<Booking[]> {
 export async function cancelBooking(bookingId: string): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      bookings = bookings.filter(booking => booking.id !== bookingId);
-      availableTimeSlots = availableTimeSlots.map(slot => {
-        const bookedSlot = bookings.find(booking => booking.timeSlot.startTime === slot.startTime && booking.timeSlot.endTime === slot.endTime);
-        if (!bookedSlot) {
-          return { ...slot, isAvailable: true };
-        }
-        return slot;
-      });
+      const bookingToRemove = bookings.find(booking => booking.id === bookingId);
+      if (bookingToRemove) {
+        bookings = bookings.filter(booking => booking.id !== bookingId);
+        // Make the time slot available again
+        availableTimeSlots = availableTimeSlots.map(slot => {
+          if (slot.startTime === bookingToRemove.timeSlot.startTime && slot.endTime === bookingToRemove.timeSlot.endTime) {
+            return { ...slot, isAvailable: true };
+          }
+          return slot;
+        });
+      }
       resolve();
     }, 500);
   });
