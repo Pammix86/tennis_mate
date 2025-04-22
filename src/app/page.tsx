@@ -33,7 +33,6 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [bookedTimeSlots, setBookedTimeSlots] = useState<string[]>([]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -82,16 +81,14 @@ export default function Home() {
     try {
       const booking = await bookTimeSlot(timeSlot);
       setUserBookings(prev => [...prev, booking]);
-      // Update booked time slots state
-      setBookedTimeSlots(prev => [...prev, `${timeSlot.startTime}-${timeSlot.endTime}`]);
-      toast({
-        title: "Booking Confirmed",
-        description: `You have successfully booked the court from ${timeSlot.startTime} to ${timeSlot.endTime}.`,
-      });
       // After booking, refetch available time slots to reflect changes
       const updatedSlots = await getAvailableTimeSlots();
       setAvailableTimeSlots(updatedSlots);
 
+      toast({
+        title: "Booking Confirmed",
+        description: `You have successfully booked the court from ${timeSlot.startTime} to ${timeSlot.endTime}.`,
+      });
     } catch (error: any) {
       console.error("Failed to book time slot:", error);
       toast({
@@ -113,7 +110,6 @@ export default function Home() {
           const slotToAdd = { ...bookingToRemove.timeSlot, isAvailable: true };
           return [...prev, slotToAdd];
         });
-        setBookedTimeSlots(prev => prev.filter(slot => slot !== `${bookingToRemove.timeSlot.startTime}-${bookingToRemove.timeSlot.endTime}`));
       }
       toast({
         title: "Booking Cancelled",
@@ -197,7 +193,7 @@ export default function Home() {
                     <span>{timeSlot.startTime} - {timeSlot.endTime}</span>
                     <Button
                       onClick={() => handleBookTimeSlot(timeSlot)}
-                      disabled={isBooked}
+                      disabled={!timeSlot.isAvailable || isBooked}
                     >
                       {isBooked ? "Booked" : "Book"}
                     </Button>
@@ -236,4 +232,5 @@ export default function Home() {
     </div>
   );
 }
+
 

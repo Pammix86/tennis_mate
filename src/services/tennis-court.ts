@@ -5,6 +5,10 @@
  */
 export interface TimeSlot {
   /**
+   * The id of the time slot.
+   */
+  id: string;
+  /**
    * The start time of the time slot.
    */
   startTime: string;
@@ -34,9 +38,9 @@ export interface Booking {
 
 // In-memory data (replace with a real database for production)
 let availableTimeSlots: TimeSlot[] = [
-  { startTime: '09:00', endTime: '10:00', isAvailable: true },
-  { startTime: '10:00', endTime: '11:00', isAvailable: true },
-  { startTime: '11:00', endTime: '12:00', isAvailable: false },
+  { id: '1', startTime: '09:00', endTime: '10:00', isAvailable: true },
+  { id: '2', startTime: '10:00', endTime: '11:00', isAvailable: true },
+  { id: '3', startTime: '11:00', endTime: '12:00', isAvailable: true },
 ];
 
 let bookings: Booking[] = [];
@@ -75,7 +79,7 @@ export async function bookTimeSlot(timeSlot: TimeSlot): Promise<Booking> {
 
       bookings = [...bookings, booking];
       availableTimeSlots = availableTimeSlots.map(slot =>
-        slot.startTime === timeSlot.startTime && slot.endTime === timeSlot.endTime
+        slot.id === timeSlot.id
           ? { ...slot, isAvailable: false }
           : slot
       );
@@ -112,7 +116,7 @@ export async function cancelBooking(bookingId: string): Promise<void> {
         bookings = bookings.filter(booking => booking.id !== bookingId);
         // Make the time slot available again
         availableTimeSlots = availableTimeSlots.map(slot => {
-          if (slot.startTime === bookingToRemove.timeSlot.startTime && slot.endTime === bookingToRemove.timeSlot.endTime) {
+          if (slot.id === bookingToRemove.timeSlot.id) {
             return { ...slot, isAvailable: true };
           }
           return slot;
