@@ -80,7 +80,8 @@ export default function Home() {
 
   const handleBookTimeSlot = async (timeSlot: TimeSlot) => {
     try {
-      await bookTimeSlot(timeSlot);
+      const booking = await bookTimeSlot(timeSlot);
+      setUserBookings(prev => [...prev, booking]);
       // Update booked time slots state
       setBookedTimeSlots(prev => [...prev, `${timeSlot.startTime}-${timeSlot.endTime}`]);
       toast({
@@ -188,13 +189,15 @@ export default function Home() {
           <CardContent className="grid gap-4">
             {availableTimeSlots.length > 0 ? (
               availableTimeSlots.map((timeSlot, index) => {
-                const isBooked = bookedTimeSlots.includes(`${timeSlot.startTime}-${timeSlot.endTime}`);
+                const isBooked = userBookings.some(booking =>
+                  booking.timeSlot.startTime === timeSlot.startTime && booking.timeSlot.endTime === timeSlot.endTime
+                );
                 return (
                   <div key={index} className="flex items-center justify-between">
                     <span>{timeSlot.startTime} - {timeSlot.endTime}</span>
                     <Button
                       onClick={() => handleBookTimeSlot(timeSlot)}
-                      disabled={isBooked || !timeSlot.isAvailable}
+                      disabled={isBooked}
                     >
                       {isBooked ? "Booked" : "Book"}
                     </Button>
@@ -233,3 +236,4 @@ export default function Home() {
     </div>
   );
 }
+
