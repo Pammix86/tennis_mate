@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { Toaster } from "@/components/ui/toaster"
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const userId = 'user-123'; // hardcoded user ID
 
@@ -13,30 +15,52 @@ export default function Home() {
   const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
   const [userBookings, setUserBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const slots = await getAvailableTimeSlots();
-        setAvailableTimeSlots(slots);
+    if (isAuthenticated) {
+      const fetchData = async () => {
+        setLoading(true);
+        try {
+          const slots = await getAvailableTimeSlots();
+          setAvailableTimeSlots(slots);
 
-        const bookings = await getBookingsForUser(userId);
-        setUserBookings(bookings);
-      } catch (error: any) {
-        console.error("Failed to fetch data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load data. Please try again later.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+          const bookings = await getBookingsForUser(userId);
+          setUserBookings(bookings);
+        } catch (error: any) {
+          console.error("Failed to fetch data:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load data. Please try again later.",
+            variant: "destructive",
+          });
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    fetchData();
-  }, []);
+      fetchData();
+    }
+  }, [isAuthenticated]);
+
+  const handleLogin = async () => {
+    // Basic authentication logic (replace with a real authentication system)
+    if (username === 'user' && password === 'password') {
+      setIsAuthenticated(true);
+      toast({
+        title: "Login Successful",
+        description: "You have successfully logged in.",
+      });
+    } else {
+      toast({
+        title: "Login Failed",
+        description: "Invalid username or password.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleBookTimeSlot = async (timeSlot: TimeSlot) => {
     try {
@@ -74,6 +98,42 @@ export default function Home() {
       });
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto p-4">
+        <Toaster />
+        <Card>
+          <CardHeader>
+            <CardTitle>Login</CardTitle>
+            <CardDescription>Enter your username and password to access the booking system.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                placeholder="Enter your username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <Button onClick={handleLogin}>Login</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading) {
     return <div>Loading...</div>;
