@@ -78,12 +78,17 @@ export default function Home() {
 
   const handleBookTimeSlot = async (timeSlot: TimeSlot) => {
     try {
-      setAvailableTimeSlots(prev =>
-        prev.map(slot =>
-          slot.id === timeSlot.id ? { ...slot, isAvailable: false } : slot
-        )
-      );
-
+      // Find the index of the time slot to book
+      const slotIndex = availableTimeSlots.findIndex(slot => slot.id === timeSlot.id);
+      if (slotIndex !== -1) {
+          // Update the available time slots by setting the specific time slot to not available
+          setAvailableTimeSlots(prev => {
+              const newSlots = [...prev]; // Create a copy of the array
+              newSlots[slotIndex] = { ...newSlots[slotIndex], isAvailable: false }; // Update the isAvailable property
+              return newSlots; // Return the new array
+          });
+      }
+      // Add booking to user bookings
       setUserBookings(prev => [...prev, { id: Math.random().toString(36).substring(7), timeSlot: timeSlot }]);
 
       toast({
@@ -101,37 +106,44 @@ export default function Home() {
   };
 
   const handleCancelBooking = async (bookingId: string) => {
-    try {
-      const bookingToRemove = userBookings.find(booking => booking.id === bookingId);
-
-      if (bookingToRemove) {
-        setAvailableTimeSlots(prev =>
-          prev.map(slot =>
-            slot.id === bookingToRemove.timeSlot.id ? { ...slot, isAvailable: true } : slot
-          )
-        );
-
-        setUserBookings(prev => prev.filter(booking => booking.id !== bookingId));
-
-        toast({
-          title: "Booking Cancelled",
-          description: "Your booking has been successfully cancelled.",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "Booking not found.",
-          variant: "destructive",
-        });
+      try {
+          // Find the booking to remove
+          const bookingToRemove = userBookings.find(booking => booking.id === bookingId);
+  
+          if (bookingToRemove) {
+              // Update the available time slots by setting the specific time slot to available
+              setAvailableTimeSlots(prev => {
+                  const newSlots = [...prev];
+                  const slotIndex = newSlots.findIndex(slot => slot.id === bookingToRemove.timeSlot.id);
+                  if (slotIndex !== -1) {
+                      newSlots[slotIndex] = { ...newSlots[slotIndex], isAvailable: true };
+                      return newSlots;
+                  }
+                  return prev; // If the slot is not found, return the previous state
+              });
+  
+              // Remove the booking from the user bookings
+              setUserBookings(prev => prev.filter(booking => booking.id !== bookingId));
+  
+              toast({
+                  title: "Booking Cancelled",
+                  description: "Your booking has been successfully cancelled.",
+              });
+          } else {
+              toast({
+                  title: "Error",
+                  description: "Booking not found.",
+                  variant: "destructive",
+              });
+          }
+      } catch (error: any) {
+          console.error("Failed to cancel booking:", error);
+          toast({
+              title: "Error",
+              description: "Failed to cancel booking. Please try again later.",
+              variant: "destructive",
+          });
       }
-    } catch (error: any) {
-      console.error("Failed to cancel booking:", error);
-      toast({
-        title: "Error",
-        description: "Failed to cancel booking. Please try again later.",
-        variant: "destructive",
-      });
-    }
   };
 
   if (!isAuthenticated) {
@@ -142,23 +154,7 @@ export default function Home() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <CardTitle>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-6 w-6 text-green-500"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M18 6l-6 6 6 6" />
-                  <path d="M6 6l6 6-6 6" />
-                </svg>
+                <i className="fa-solid fa-table-tennis-paddle-ball"></i>
                 Tennis Court Booking
               </CardTitle>
             </div>
@@ -206,7 +202,7 @@ export default function Home() {
           </CardHeader>
           <CardContent className="grid gap-4">
             {availableTimeSlots.length > 0 ? (
-              availableTimeSlots.map((timeSlot) => {
+              availableTimeSlots.map((timeSlot, index) => {
                 const isBooked = userBookings.some(booking =>
                   booking.timeSlot.id === timeSlot.id
                 );
@@ -215,9 +211,9 @@ export default function Home() {
                     <span>{timeSlot.startTime} - {timeSlot.endTime}</span>
                     <Button
                       onClick={() => handleBookTimeSlot(timeSlot)}
-                      disabled={isBooked}
+                      disabled={!timeSlot.isAvailable}
                     >
-                      {isBooked ? "Booked" : "Book"}
+                      {timeSlot.isAvailable ? "Book" : "Booked"}
                     </Button>
                   </div>
                 );
@@ -238,7 +234,7 @@ export default function Home() {
           <CardContent className="grid gap-4">
             {userBookings.length > 0 ? (
               userBookings.map((booking, index) => (
-                <div key={index} className="flex items-center justify-between">
+                <div key={booking.id} className="flex items-center justify-between">
                   <span>{booking.timeSlot.startTime} - {booking.timeSlot.endTime}</span>
                   <Button variant="destructive" onClick={() => handleCancelBooking(booking.id)}>
                     Cancel
