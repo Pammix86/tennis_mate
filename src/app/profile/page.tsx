@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
+import { toast } from "@/hooks/use-toast";
 
 interface UserProfile {
   firstName: string;
@@ -29,18 +30,31 @@ export default function ProfilePage() {
 
   useEffect(() => {
     // Replace with actual data fetching logic in a real application
-    const dummyProfile: UserProfile = {
-      firstName: "John",
-      lastName: "Doe",
-      email: "john.doe@example.com",
-    };
-    setProfile(dummyProfile);
+    const storedProfile = localStorage.getItem('userProfile');
+    if (storedProfile) {
+      setProfile(JSON.parse(storedProfile));
+    } else {
+      const dummyProfile: UserProfile = {
+        firstName: "John",
+        lastName: "Doe",
+        email: "john.doe@example.com",
+      };
+      setProfile(dummyProfile);
+    }
   }, []);
 
     const router = useRouter();
 
     const handleBackToHome = () => {
         router.push('/');
+    };
+
+    const handleUpdateProfile = () => {
+      localStorage.setItem('userProfile', JSON.stringify(profile));
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been successfully updated.",
+      });
     };
 
   return (
@@ -89,11 +103,10 @@ export default function ProfilePage() {
           </div>
           <div className="flex justify-between">
             <Button variant="outline" onClick={handleBackToHome}>Back to Home</Button>
-            <Button>Update Profile</Button>
+            <Button onClick={handleUpdateProfile}>Update Profile</Button>
           </div>
         </CardContent>
       </Card>
     </div>
   );
 }
-
