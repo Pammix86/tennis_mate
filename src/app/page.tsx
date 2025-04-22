@@ -79,12 +79,21 @@ export default function Home() {
 
   const handleBookTimeSlot = async (timeSlot: TimeSlot) => {
     try {
-      const booking = await bookTimeSlot(timeSlot);
-      setUserBookings(prev => [...prev, booking]);
-      // After booking, refetch available time slots to reflect changes
-      const updatedSlots = await getAvailableTimeSlots();
-      setAvailableTimeSlots(updatedSlots);
-
+      // Find the time slot in availableTimeSlots and disable it
+      setAvailableTimeSlots(prev =>
+        prev.map(slot =>
+          slot.id === timeSlot.id ? { ...slot, isAvailable: false } : slot
+        )
+      );
+  
+      // Add the time slot to user bookings
+      const bookingId = Math.random().toString(36).substring(7); // Generate a random ID
+      const newBooking: Booking = {
+        id: bookingId,
+        timeSlot: timeSlot,
+      };
+      setUserBookings(prev => [...prev, newBooking]);
+  
       toast({
         title: "Booking Confirmed",
         description: `You have successfully booked the court from ${timeSlot.startTime} to ${timeSlot.endTime}.`,
@@ -101,23 +110,31 @@ export default function Home() {
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
-      await cancelBooking(bookingId);
+      // Find the booking to be cancelled
       const bookingToRemove = userBookings.find(booking => booking.id === bookingId);
-      setUserBookings(prev => prev.filter(booking => booking.id !== bookingId));
-      // If timeSlot is defined, update availableTimeSlots
-      if (bookingToRemove?.timeSlot) {
-        setAvailableTimeSlots(prev => {
-          const slotToAdd = { ...bookingToRemove.timeSlot, isAvailable: true };
-          return [...prev, slotToAdd];
+  
+      if (bookingToRemove) {
+        // Enable the time slot in availableTimeSlots
+        setAvailableTimeSlots(prev =>
+          prev.map(slot =>
+            slot.id === bookingToRemove.timeSlot.id ? { ...slot, isAvailable: true } : slot
+          )
+        );
+  
+        // Remove the booking from user bookings
+        setUserBookings(prev => prev.filter(booking => booking.id !== bookingId));
+  
+        toast({
+          title: "Booking Cancelled",
+          description: "Your booking has been successfully cancelled.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Booking not found.",
+          variant: "destructive",
         });
       }
-      toast({
-        title: "Booking Cancelled",
-        description: "Your booking has been successfully cancelled.",
-      });
-       // After cancelling, refetch available time slots to reflect changes
-       const updatedSlots = await getAvailableTimeSlots();
-       setAvailableTimeSlots(updatedSlots);
     } catch (error: any) {
       console.error("Failed to cancel booking:", error);
       toast({
@@ -143,7 +160,7 @@ export default function Home() {
             <CardDescription>Enter your username and password to access the booking system.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
-            <div className="grid gap-2">
+            
               <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
@@ -151,8 +168,8 @@ export default function Home() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
-            </div>
-            <div className="grid gap-2">
+            
+            
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
@@ -161,7 +178,7 @@ export default function Home() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-            </div>
+            
             <Button onClick={handleLogin}>Login</Button>
           </CardContent>
         </Card>
