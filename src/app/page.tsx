@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { getAvailableTimeSlots, bookTimeSlot, getBookingsForUser, cancelBooking, TimeSlot, Booking } from '@/services/tennis-court';
+import { getAvailableTimeSlots } from '@/services/tennis-court';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { Toaster } from "@/components/ui/toaster"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Link from 'next/link';
+import { CircleUserRound } from 'lucide-react';
 
 const userId = 'user-123'; // hardcoded user ID
 
@@ -25,6 +27,42 @@ const fakeUser: User = {
   passwordHash: 'password', // In real apps, hash the password!
 };
 
+/**
+ * Represents a time slot.
+ */
+export interface TimeSlot {
+  /**
+   * The id of the time slot.
+   */
+  id: string;
+  /**
+   * The start time of the time slot.
+   */
+  startTime: string;
+  /**
+   * The end time of the time slot.
+   */
+  endTime: string;
+  /**
+   * Whether the time slot is available.
+   */
+  isAvailable: boolean;
+}
+
+/**
+ * Represents a booking.
+ */
+export interface Booking {
+  /**
+   * The id of the booking.
+   */
+  id: string;
+  /**
+   * The time slot of the booking.
+   */
+  timeSlot: TimeSlot;
+}
+
 export default function Home() {
   const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
   const [userBookings, setUserBookings] = useState<Booking[]>([]);
@@ -40,9 +78,12 @@ export default function Home() {
         try {
           const slots = await getAvailableTimeSlots();
           setAvailableTimeSlots(slots);
-
-          const bookings = await getBookingsForUser(userId);
-          setUserBookings(bookings);
+          
+          // Retrieve bookings from localStorage
+          const storedBookings = localStorage.getItem('bookings');
+          if (storedBookings) {
+            setUserBookings(JSON.parse(storedBookings));
+          }
         } catch (error: any) {
           console.error("Failed to fetch data:", error);
           toast({
@@ -82,6 +123,7 @@ export default function Home() {
     setPassword('');
     setUserBookings([]);
     setAvailableTimeSlots([]);
+    localStorage.removeItem('bookings'); // Clear bookings from localStorage
     toast({
       title: "Logout Successful",
       description: "You have been successfully logged out.",
@@ -94,6 +136,9 @@ export default function Home() {
         const newBookings = [...prev, { id: timeSlot.id, timeSlot: timeSlot }];
         // Sort the bookings by timeSlot.startTime
         newBookings.sort((a, b) => a.timeSlot.startTime.localeCompare(b.timeSlot.startTime));
+        
+        // Save bookings to localStorage
+        localStorage.setItem('bookings', JSON.stringify(newBookings));
         return newBookings;
       });
 
@@ -122,35 +167,25 @@ export default function Home() {
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
-      // Find the booking to remove
-      const bookingToRemove = userBookings.find(booking => booking.id === bookingId);
+      setUserBookings(prev => {
+        const newBookings = prev.filter(booking => booking.timeSlot.id !== bookingId);
+        localStorage.setItem('bookings', JSON.stringify(newBookings));
+        return newBookings;
+      });
 
-      if (bookingToRemove) {
-        // Update the available time slots by setting the specific time slot to available
-        setAvailableTimeSlots(prev => {
-          const newSlots = prev.map(slot => {
-            if (slot.id === bookingToRemove.timeSlot.id) {
-              return { ...slot, isAvailable: true };
-            }
-            return slot;
-          });
-          return newSlots;
+      setAvailableTimeSlots(prev => {
+        return prev.map(slot => {
+          if (slot.id === bookingId) {
+            return { ...slot, isAvailable: true };
+          }
+          return slot;
         });
+      });
 
-        // Remove the booking from the user bookings
-        setUserBookings(prev => prev.filter(booking => booking.id !== bookingId));
-
-        toast({
-          title: "Booking Cancelled",
-          description: "Your booking has been successfully cancelled.",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "Booking not found.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Booking Cancelled",
+        description: "Your booking has been successfully cancelled.",
+      });
     } catch (error: any) {
       console.error("Failed to cancel booking:", error);
       toast({
@@ -168,8 +203,8 @@ export default function Home() {
         <Card>
           <CardHeader>
             <div className="flex items-center space-x-2">
+              <i className="fa-solid fa-table-tennis-paddle-ball"></i>
               <CardTitle>
-                <i className="fa-solid fa-table-tennis-paddle-ball"></i>
                 Tennis Court Booking
               </CardTitle>
             </div>
@@ -209,7 +244,13 @@ export default function Home() {
   return (
     <div className="container mx-auto p-4">
       <Toaster />
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-between mb-4">
+        <Link href="/profile">
+          <Button variant="ghost">
+            <CircleUserRound className="mr-2 h-4 w-4" />
+            Profile
+          </Button>
+        </Link>
         <Button variant="outline" onClick={handleLogout}>
           Logout
         </Button>
@@ -222,7 +263,7 @@ export default function Home() {
           </CardHeader>
           <CardContent className="grid gap-4">
             {availableTimeSlots.length > 0 ? (
-              availableTimeSlots.map((timeSlot, index) => {
+              availableTimeSlots.map((timeSlot) => {
                 const isBooked = userBookings.some(booking =>
                   booking.timeSlot.id === timeSlot.id
                 );
@@ -253,7 +294,7 @@ export default function Home() {
           </CardHeader>
           <CardContent className="grid gap-4">
             {userBookings.length > 0 ? (
-              userBookings.map((booking, index) => (
+              userBookings.map((booking) => (
                 <div key={booking.timeSlot.id} className="flex items-center justify-between">
                   <span><i className="fa-regular fa-clock"></i> {booking.timeSlot.startTime} - {booking.timeSlot.endTime}</span>
                   <Button variant="destructive" onClick={() => handleCancelBooking(booking.timeSlot.id)}>
