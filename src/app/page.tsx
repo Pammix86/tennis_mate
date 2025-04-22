@@ -78,18 +78,21 @@ export default function Home() {
 
   const handleBookTimeSlot = async (timeSlot: TimeSlot) => {
     try {
-      // Find the index of the time slot to book
-      const slotIndex = availableTimeSlots.findIndex(slot => slot.id === timeSlot.id);
-      if (slotIndex !== -1) {
-          // Update the available time slots by setting the specific time slot to not available
-          setAvailableTimeSlots(prev => {
-              const newSlots = [...prev]; // Create a copy of the array
-              newSlots[slotIndex] = { ...newSlots[slotIndex], isAvailable: false }; // Update the isAvailable property
-              return newSlots; // Return the new array
-          });
-      }
-      // Add booking to user bookings
-      setUserBookings(prev => [...prev, { id: Math.random().toString(36).substring(7), timeSlot: timeSlot }]);
+      setUserBookings(prev => {
+        const newBookings = [...prev, { id: Math.random().toString(36).substring(7), timeSlot: timeSlot }];
+        // Sort the bookings by timeSlot.startTime
+        newBookings.sort((a, b) => a.timeSlot.startTime.localeCompare(b.timeSlot.startTime));
+        return newBookings;
+      });
+
+      setAvailableTimeSlots(prev => {
+        return prev.map(slot => {
+          if (slot.id === timeSlot.id) {
+            return { ...slot, isAvailable: false };
+          }
+          return slot;
+        });
+      });
 
       toast({
         title: "Booking Confirmed",
@@ -106,44 +109,44 @@ export default function Home() {
   };
 
   const handleCancelBooking = async (bookingId: string) => {
-      try {
-          // Find the booking to remove
-          const bookingToRemove = userBookings.find(booking => booking.id === bookingId);
-  
-          if (bookingToRemove) {
-              // Update the available time slots by setting the specific time slot to available
-              setAvailableTimeSlots(prev => {
-                  const newSlots = [...prev];
-                  const slotIndex = newSlots.findIndex(slot => slot.id === bookingToRemove.timeSlot.id);
-                  if (slotIndex !== -1) {
-                      newSlots[slotIndex] = { ...newSlots[slotIndex], isAvailable: true };
-                      return newSlots;
-                  }
-                  return prev; // If the slot is not found, return the previous state
-              });
-  
-              // Remove the booking from the user bookings
-              setUserBookings(prev => prev.filter(booking => booking.id !== bookingId));
-  
-              toast({
-                  title: "Booking Cancelled",
-                  description: "Your booking has been successfully cancelled.",
-              });
-          } else {
-              toast({
-                  title: "Error",
-                  description: "Booking not found.",
-                  variant: "destructive",
-              });
+    try {
+      // Find the booking to remove
+      const bookingToRemove = userBookings.find(booking => booking.id === bookingId);
+
+      if (bookingToRemove) {
+        // Update the available time slots by setting the specific time slot to available
+        setAvailableTimeSlots(prev => {
+          const newSlots = [...prev];
+          const slotIndex = newSlots.findIndex(slot => slot.id === bookingToRemove.timeSlot.id);
+          if (slotIndex !== -1) {
+            newSlots[slotIndex] = { ...newSlots[slotIndex], isAvailable: true };
+            return newSlots;
           }
-      } catch (error: any) {
-          console.error("Failed to cancel booking:", error);
-          toast({
-              title: "Error",
-              description: "Failed to cancel booking. Please try again later.",
-              variant: "destructive",
-          });
+          return prev; // If the slot is not found, return the previous state
+        });
+
+        // Remove the booking from the user bookings
+        setUserBookings(prev => prev.filter(booking => booking.id !== bookingId));
+
+        toast({
+          title: "Booking Cancelled",
+          description: "Your booking has been successfully cancelled.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Booking not found.",
+          variant: "destructive",
+        });
       }
+    } catch (error: any) {
+      console.error("Failed to cancel booking:", error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel booking. Please try again later.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!isAuthenticated) {
@@ -211,9 +214,9 @@ export default function Home() {
                     <span>{timeSlot.startTime} - {timeSlot.endTime}</span>
                     <Button
                       onClick={() => handleBookTimeSlot(timeSlot)}
-                      disabled={!timeSlot.isAvailable}
+                      disabled={!timeSlot.isAvailable || isBooked}
                     >
-                      {timeSlot.isAvailable ? "Book" : "Booked"}
+                      {timeSlot.isAvailable ? (isBooked ? "Booked" : "Book") : "Booked"}
                     </Button>
                   </div>
                 );
@@ -250,3 +253,4 @@ export default function Home() {
     </div>
   );
 }
+
