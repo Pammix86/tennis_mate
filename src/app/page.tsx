@@ -76,6 +76,18 @@ export default function Home() {
     }
   };
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUsername('');
+    setPassword('');
+    setUserBookings([]);
+    setAvailableTimeSlots([]);
+    toast({
+      title: "Logout Successful",
+      description: "You have been successfully logged out.",
+    });
+  };
+
   const handleBookTimeSlot = async (timeSlot: TimeSlot) => {
     try {
       setUserBookings(prev => {
@@ -197,6 +209,11 @@ export default function Home() {
   return (
     <div className="container mx-auto p-4">
       <Toaster />
+      <div className="flex justify-end mb-4">
+        <Button variant="outline" onClick={handleLogout}>
+          Logout
+        </Button>
+      </div>
       <section className="mb-8">
         <Card>
           <CardHeader>
@@ -216,7 +233,7 @@ export default function Home() {
                       onClick={() => handleBookTimeSlot(timeSlot)}
                       disabled={!timeSlot.isAvailable || isBooked}
                     >
-                      {timeSlot.isAvailable ? (isBooked ? "Booked" : "Book") : "Booked"}
+                      {timeSlot.isAvailable ? (isBooked ? "Booked" : "Book") : "Book"}
                     </Button>
                   </div>
                 );
@@ -253,4 +270,3 @@ export default function Home() {
     </div>
   );
 }
-
