@@ -8,7 +8,11 @@ import { toast } from '@/hooks/use-toast';
 import { Toaster } from "@/components/ui/toaster"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Circle } from "lucide-react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTennisBall } from '@fortawesome/free-solid-svg-icons';
+import '@fortawesome/fontawesome-svg-core/styles.css';
+import { config } from '@fortawesome/fontawesome-svg-core';
+config.autoAddCss = false;
 
 const userId = 'user-123'; // hardcoded user ID
 
@@ -153,14 +157,14 @@ export default function Home() {
           <CardHeader>
           <div className="flex items-center space-x-2">
             <CardTitle>
-            <Circle className="h-6 w-6 text-green-500" />
+            <FontAwesomeIcon icon={faTennisBall} className="h-6 w-6 text-green-500" />
               Tennis Court Booking
             </CardTitle>
             </div>
             <CardDescription>Enter your username and password to access the booking system.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
-            
+            <div className="grid gap-2">
               <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
@@ -168,8 +172,8 @@ export default function Home() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
-            
-            
+            </div>
+            <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
@@ -178,7 +182,7 @@ export default function Home() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-            
+            </div>
             <Button onClick={handleLogin}>Login</Button>
           </CardContent>
         </Card>
